@@ -103,6 +103,10 @@ class SettingsPage(QWidget):
         dl.addLayout(row)
         page.addWidget(data_frame)
 
+        ver = QLabel(f"Version {M.VERSION} · toasterdude18-max/genki-study-desktop")
+        ver.setProperty("class", "muted")
+        page.addWidget(ver)
+
         page.addStretch(1)
 
     def _export(self):

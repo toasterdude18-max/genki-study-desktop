@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.progress = progress
         self._in_lesson = False
         self._all_ids = [v["id"] for l in data["lessons"] for v in l["vocab"]]
-        self.setWindowTitle("Genki Study")
+        self.setWindowTitle(f"Genki Study v{M.VERSION}")
 
         central = QWidget()
         central.setObjectName("root")
