@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+release/
+Genki Study/
+Genki Study.exe
+*.spec
+
+# User state — never commit progress or logs
+data/state/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+desktop.ini
