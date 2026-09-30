@@ -1,6 +1,6 @@
 ﻿"""Domain constants for the Genki study app."""
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 LESSON_COUNT = 23
 
