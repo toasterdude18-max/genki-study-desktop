@@ -2136,9 +2136,9 @@
      "type": "verb-irr",
      "kanji": "勉強する",
      "extra": false,
-     "keigo": "勉強なさる",
-     "keigoKana": "べんきょうなさる",
-     "keigoMasu": "勉強なさいます"
+     "keigo": "ご勉強なさる",
+     "keigoKana": "ごべんきょうなさる",
+     "keigoMasu": "ご勉強なさいます"
     },
     {
      "id": "v03-011",
@@ -5632,9 +5632,9 @@
      "type": "verb",
      "kanji": "料理する",
      "extra": false,
-     "keigo": "料理なさる",
-     "keigoKana": "りょうりなさる",
-     "keigoMasu": "料理なさいます"
+     "keigo": "お料理なさる",
+     "keigoKana": "おりょうりなさる",
+     "keigoMasu": "お料理なさいます"
     },
     {
      "id": "v07-013",
@@ -5645,9 +5645,9 @@
      "type": "verb",
      "kanji": "結婚する",
      "extra": false,
-     "keigo": "結婚なさる",
-     "keigoKana": "けっこんなさる",
-     "keigoMasu": "結婚なさいます"
+     "keigo": "ご結婚なさる",
+     "keigoKana": "ごけっこんなさる",
+     "keigoMasu": "ご結婚なさいます"
     },
     {
      "id": "v07-014",
@@ -7628,9 +7628,9 @@
      "type": "verb",
      "kanji": null,
      "extra": true,
-     "keigo": "演奏なさる",
-     "keigoKana": "えんそうなさる",
-     "keigoMasu": "演奏なさいます"
+     "keigo": "ご演奏なさる",
+     "keigoKana": "ごえんそうなさる",
+     "keigoMasu": "ご演奏なさいます"
     },
     {
      "id": "v09-033",
@@ -9297,9 +9297,9 @@
      "type": "verb",
      "kanji": "散歩する",
      "extra": false,
-     "keigo": "散歩なさる",
-     "keigoKana": "さんぽなさる",
-     "keigoMasu": "散歩なさいます"
+     "keigo": "お散歩なさる",
+     "keigoKana": "おさんぽなさる",
+     "keigoMasu": "お散歩なさいます"
     },
     {
      "id": "v11-028",
@@ -9310,9 +9310,9 @@
      "type": "verb",
      "kanji": "読書する",
      "extra": false,
-     "keigo": "読書なさる",
-     "keigoKana": "どくしょなさる",
-     "keigoMasu": "読書なさいます"
+     "keigo": "お読書なさる",
+     "keigoKana": "おどくしょなさる",
+     "keigoMasu": "お読書なさいます"
     },
     {
      "id": "v11-029",
@@ -11178,9 +11178,9 @@
      "type": "verb",
      "kanji": null,
      "extra": true,
-     "keigo": "採用なさる",
-     "keigoKana": "さいようなさる",
-     "keigoMasu": "採用なさいます"
+     "keigo": "ご採用なさる",
+     "keigoKana": "ごさいようなさる",
+     "keigoMasu": "ご採用なさいます"
     },
     {
      "id": "v13-039",
@@ -13662,9 +13662,9 @@
      "type": "verb",
      "kanji": "混乱する",
      "extra": false,
-     "keigo": "勘違いなさる",
-     "keigoKana": "かんちがいなさる",
-     "keigoMasu": "勘違いなさいます"
+     "keigo": "ご勘違いなさる",
+     "keigoKana": "ごかんちがいなさる",
+     "keigoMasu": "ご勘違いなさいます"
     },
     {
      "id": "v16-030",
@@ -13675,9 +13675,9 @@
      "type": "verb",
      "kanji": null,
      "extra": false,
-     "keigo": "混乱なさる",
-     "keigoKana": "こんらんなさる",
-     "keigoMasu": "混乱なさいます"
+     "keigo": "ご混乱なさる",
+     "keigoKana": "ごこんらんなさる",
+     "keigoMasu": "ご混乱なさいます"
     },
     {
      "id": "v16-031",
@@ -14241,9 +14241,9 @@
      "type": "verb",
      "kanji": "案内する",
      "extra": false,
-     "keigo": "案内なさる",
-     "keigoKana": "あんないなさる",
-     "keigoMasu": "案内なさいます"
+     "keigo": "ご案内なさる",
+     "keigoKana": "ごあんないなさる",
+     "keigoMasu": "ご案内なさいます"
     },
     {
      "id": "v17-008",
@@ -14254,9 +14254,9 @@
      "type": "verb",
      "kanji": "説明する",
      "extra": false,
-     "keigo": "説明なさる",
-     "keigoKana": "せつめいなさる",
-     "keigoMasu": "説明なさいます"
+     "keigo": "ご説明なさる",
+     "keigoKana": "ごせつめいなさる",
+     "keigoMasu": "ご説明なさいます"
     },
     {
      "id": "v17-009",
@@ -14501,9 +14501,9 @@
      "type": "expression",
      "kanji": "気にする",
      "extra": false,
-     "keigo": "気になさる",
-     "keigoKana": "きになさる",
-     "keigoMasu": "気になさいます"
+     "keigo": "お気になさる",
+     "keigoKana": "おきになさる",
+     "keigoMasu": "お気になさいます"
     },
     {
      "id": "v17-028",
@@ -15972,10 +15972,10 @@
      "extra": false
     },
     {
-     "pattern": "Noun + なさる",
-     "meaning": "Honorific for する-verbs: 勉強する→勉強なさる, 紹介する→紹介なさる",
+     "pattern": "ご／お + Noun + なさる",
+     "meaning": "Honorific for する-verbs: 勉強する→ご勉強なさる, 紹介する→ご紹介なさる, 料理する→お料理なさる",
      "example": {
-      "jp": "にほんごをべんきょうなさいますか。",
+      "jp": "にほんごをごべんきょうなさいますか。",
       "en": "Do you study Japanese? (honorific)"
      },
      "extra": false
@@ -16148,9 +16148,9 @@
      "type": "verb",
      "kanji": "紹介する",
      "extra": false,
-     "keigo": "紹介なさる",
-     "keigoKana": "しょうかいなさる",
-     "keigoMasu": "紹介なさいます"
+     "keigo": "ご紹介なさる",
+     "keigoKana": "ごしょうかいなさる",
+     "keigoMasu": "ご紹介なさいます"
     },
     {
      "id": "v19-012",
@@ -16239,9 +16239,9 @@
      "type": "verb",
      "kanji": "挨拶する",
      "extra": false,
-     "keigo": "挨拶なさる",
-     "keigoKana": "あいさつなさる",
-     "keigoMasu": "挨拶なさいます"
+     "keigo": "ご挨拶なさる",
+     "keigoKana": "ごあいさつなさる",
+     "keigoMasu": "ご挨拶なさいます"
     },
     {
      "id": "v19-019",
@@ -16252,9 +16252,9 @@
      "type": "verb",
      "kanji": "報告する",
      "extra": false,
-     "keigo": "報告なさる",
-     "keigoKana": "ほうこくなさる",
-     "keigoMasu": "報告なさいます"
+     "keigo": "ご報告なさる",
+     "keigoKana": "ごほうこくなさる",
+     "keigoMasu": "ご報告なさいます"
     },
     {
      "id": "v19-020",
@@ -16837,9 +16837,9 @@
      "type": "verb",
      "kanji": null,
      "extra": false,
-     "keigo": "遠慮なさる",
-     "keigoKana": "えんりょなさる",
-     "keigoMasu": "遠慮なさいます"
+     "keigo": "ご遠慮なさる",
+     "keigoKana": "ごえんりょなさる",
+     "keigoMasu": "ご遠慮なさいます"
     },
     {
      "id": "v19-065",
@@ -16850,9 +16850,9 @@
      "type": "verb",
      "kanji": null,
      "extra": false,
-     "keigo": "招待なさる",
-     "keigoKana": "しょうたいなさる",
-     "keigoMasu": "招待なさいます"
+     "keigo": "ご招待なさる",
+     "keigoKana": "ごしょうたいなさる",
+     "keigoMasu": "ご招待なさいます"
     },
     {
      "id": "v19-066",
