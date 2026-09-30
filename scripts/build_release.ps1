@@ -20,7 +20,7 @@ $webRoot = "C:\Users\tiger\genki-study-app\pagelove"
 
 Write-Host "=== 1/5 stamp version $Version into models.py ==="
 $mp = Join-Path $root "app\models.py"
-(Get-Content $mp -Raw) -replace 'VERSION = "[^"]*"', "VERSION = `"$Version`"" |
+(Get-Content $mp -Raw -Encoding UTF8) -replace 'VERSION = "[^"]*"', "VERSION = `"$Version`"" |
     Set-Content $mp -NoNewline -Encoding UTF8
 
 Write-Host "=== 2/5 rebuild onedir bundle ==="
@@ -54,7 +54,7 @@ $sizeMB = [math]::Round((Get-Item $setup).Length / 1MB, 1)
 
 $dl = Join-Path $webRoot "download.html"
 if (Test-Path $dl) {
-    $html = Get-Content $dl -Raw
+    $html = Get-Content $dl -Raw -Encoding UTF8
     $assetUrl = "https://github.com/toasterdude18-max/genki-study-desktop/releases/latest/download/Genki-Study-Setup-v$Version.exe"
     $html = $html -replace 'id="dl-version">[^<]*<', "id=`"dl-version`">$Version<"
     $html = $html -replace 'id="dl-version2">[^<]*<', "id=`"dl-version2`">$Version<"
