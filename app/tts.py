@@ -1,10 +1,14 @@
 """Offline Japanese text-to-speech via Windows SAPI (pyttsx3).
 
-Speak requests are queued onto a single worker thread so the UI never blocks.
-If no Japanese voice is installed everything degrades to silence.
+Speak requests are queued onto a single worker thread so the UI never blocks;
+a new request replaces any still-queued backlog. If no Japanese voice is
+installed everything degrades to silence, and any failure is logged to
+data\\state\\app.log.
 """
+import os
 import queue
 import threading
+from datetime import datetime
 
 import pyttsx3
 
@@ -13,6 +17,17 @@ _ja_voice = None
 _checked = False
 _lock = threading.Lock()
 _queue = queue.Queue()
+_worker_started = False
+
+
+def _log(msg):
+    try:
+        app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.join(app_dir, "data", "state", "app.log")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().isoformat()}] TTS {msg}\n")
+    except Exception:
+        pass
 
 
 def _init():
@@ -30,9 +45,23 @@ def _init():
                     break
             if _ja_voice:
                 _engine.setProperty("voice", _ja_voice)
-        except Exception:
+                _log(f"voice found: {_ja_voice}")
+            else:
+                _log("no Japanese voice found")
+        except Exception as e:
             _engine = None
             _ja_voice = None
+            _log(f"init failed: {e!r}")
+
+
+def _start_worker():
+    global _worker_started
+    with _lock:
+        if _worker_started:
+            return
+        _worker_started = True
+    threading.Thread(target=_worker, daemon=True).start()
+    _log("worker started")
 
 
 def _worker():
@@ -43,8 +72,8 @@ def _worker():
         try:
             _engine.say(text)
             _engine.runAndWait()
-        except Exception:
-            pass
+        except Exception as e:
+            _log(f"speak failed: {e!r}")
 
 
 def has_ja_voice():
@@ -57,6 +86,13 @@ def speak(text):
     _init()
     if not _engine or not _ja_voice or not text:
         return
+    _start_worker()
+    # drop the backlog: only the most recent request matters
+    while not _queue.empty():
+        try:
+            _queue.get_nowait()
+        except queue.Empty:
+            break
     _queue.put(text)
 
 
