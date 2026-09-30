@@ -183,7 +183,7 @@ def _rev_map(verbs):
 
 
 def _keigo_label(v):
-    return f'{v["keigo"]}（尊敬語）'
+    return f'{v["keigo"]}（{v["keigoKana"]}・尊敬語）'
 
 
 def keigo_groups(verbs):
