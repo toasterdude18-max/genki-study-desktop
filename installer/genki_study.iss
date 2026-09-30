@@ -2,7 +2,9 @@
 ; Build: build_release.ps1 passes /DMyAppVersion=<ver> to override the default below.
 
 #define MyAppName "Genki Study"
-#define MyAppVersion "1.0.0"
+#ifndef MyAppVersion
+  #define MyAppVersion "1.0.0"
+#endif
 #define MyAppExeName "Genki Study.exe"
 
 [Setup]
