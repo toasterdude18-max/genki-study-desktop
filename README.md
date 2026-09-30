@@ -21,3 +21,17 @@ XP and streaks.
     data\state\        progress.json + backups
 
 Progress starts fresh in data\state\progress.json.
+
+## Dependencies
+
+`requirements.in` is the human-readable manifest; `requirements.lock` is the
+hash-pinned lockfile (generated with `pip-compile --generate-hashes`). Install
+with:
+
+    pip install --require-hashes -r requirements.lock
+
+## Releasing
+
+    .\scripts\build_release.ps1 -Version X.Y.Z     # rebuild, installer, hash, page stamp
+    gh release create vX.Y.Z <installer> <checksums.txt>
+

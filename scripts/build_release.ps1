@@ -55,12 +55,14 @@ $sizeMB = [math]::Round((Get-Item $setup).Length / 1MB, 1)
 $dl = Join-Path $webRoot "download.html"
 if (Test-Path $dl) {
     $html = Get-Content $dl -Raw -Encoding UTF8
-    $assetUrl = "https://github.com/toasterdude18-max/genki-study-desktop/releases/latest/download/Genki-Study-Setup-v$Version.exe"
+    $assetUrl = "https://github.com/toasterdude18-max/genki-study-desktop/releases/download/v$Version/Genki-Study-Setup-v$Version.exe"
+    $notesUrl = "https://github.com/toasterdude18-max/genki-study-desktop/releases/tag/v$Version"
     $html = $html -replace 'id="dl-version">[^<]*<', "id=`"dl-version`">$Version<"
     $html = $html -replace 'id="dl-version2">[^<]*<', "id=`"dl-version2`">$Version<"
     $html = $html -replace 'id="dl-hash">[^<]*<', "id=`"dl-hash`">$hash<"
     $html = $html -replace 'id="dl-size">[^<]*<', "id=`"dl-size`">$sizeMB MB<"
-    $html = $html -replace 'id="dl-url" href="[^"]*"', "id=`"dl-url`" href=`"$assetUrl`""
+    $html = $html -replace 'id="dl-main" href="[^"]*"', "id=`"dl-main`" href=`"$assetUrl`""
+    $html = $html -replace 'id="dl-notes" href="[^"]*"', "id=`"dl-notes`" href=`"$notesUrl`""
     Set-Content $dl $html -NoNewline -Encoding UTF8
     Write-Host "updated $dl"
 }
