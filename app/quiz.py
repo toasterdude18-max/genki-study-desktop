@@ -11,9 +11,17 @@ import random
 import re
 
 
+_KATA = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴ"
+_HIRA = "ぁあぃいぅうぇえぉおかがきぎくぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔ"
+_KANA_TABLE = str.maketrans(_KATA, _HIRA)
+
+
 def norm(s):
-    """Normalise for answer comparison: lowercase, strip punctuation and spaces."""
-    return re.sub(r"[。．.、,!！?？\s]", "", str(s or "")).strip().lower()
+    """Normalise for comparison: lowercase, strip punctuation, unify katakana to
+    hiragana so both scripts are always accepted."""
+    s = str(s or "").strip().lower()
+    s = re.sub(r"[。．.、,!！?？\s〜~]", "", s)
+    return s.translate(_KANA_TABLE)
 
 
 def _english_answers(v):
@@ -149,7 +157,7 @@ def quiz_keigo_en_jp(data, lesson_id, n=10):
     for v in _pick(_keigo_verbs(data, lesson_id), n):
         items.append({"kind": "type", "prompt": v["english"], "lang": "ja",
                       "answers": [a for a in (v["keigoKana"], v["keigo"], v["keigoMasu"]) if a],
-                      "explain": f'{_show_pair(v)} → {v["keigo"]}（{v["keigoMasu"]}）',
+                      "explain": f'{_show_pair(v)} → {v["keigo"]}（{v["keigoKana"]}／{v["keigoMasu"]}）',
                       "speakAnswer": v["keigoKana"], "vocabId": v["id"]})
     return items
 
@@ -160,7 +168,7 @@ def quiz_keigo_jp_en(data, lesson_id, n=10):
     for v in _pick(_keigo_verbs(data, lesson_id), n):
         items.append({"kind": "type", "prompt": _keigo_label(v), "promptJa": True, "lang": "en",
                       "answers": _english_answers(v),
-                      "explain": f'{v["keigo"]} = {v["english"]} (honorific of {_show_pair(v)})',
+                      "explain": f'{v["keigo"]}（{v["keigoKana"]}） = {v["english"]} (honorific of {_show_pair(v)})',
                       "speakText": v["keigoKana"], "vocabId": v["id"]})
     return items
 
@@ -178,7 +186,7 @@ def quiz_keigo_hon_norm(data, lesson_id, n=10):
         bases_label = " / ".join(_show_pair(b) for b in bases)
         items.append({"kind": "type", "prompt": _keigo_label(v), "promptJa": True, "lang": "ja",
                       "answers": sorted(set(answers)),
-                      "explain": f'{v["keigo"]} ← {bases_label}',
+                      "explain": f'{v["keigo"]}（{v["keigoKana"]}） ← {bases_label}',
                       "speakText": v["keigoKana"], "speakAnswer": bases[0]["japanese"],
                       "vocabId": v["id"]})
     return items
@@ -190,7 +198,7 @@ def quiz_keigo_norm_hon(data, lesson_id, n=10):
     for v in _pick(_keigo_verbs(data, lesson_id), n):
         items.append({"kind": "type", "prompt": _show_pair(v), "promptJa": True, "lang": "ja",
                       "answers": [a for a in (v["keigoKana"], v["keigo"], v["keigoMasu"]) if a],
-                      "explain": f'{_show_pair(v)} → {v["keigo"]}（{v["keigoMasu"]}）',
+                      "explain": f'{_show_pair(v)} → {v["keigo"]}（{v["keigoKana"]}／{v["keigoMasu"]}）',
                       "speakText": v["japanese"], "speakAnswer": v["keigoKana"],
                       "vocabId": v["id"]})
     return items
@@ -222,11 +230,11 @@ def keigo_rows(data, lesson_id, direction):
     if direction == "keigo-norm-hon":
         for v in verbs:
             rows.append({"stim": _show_pair(v),
-                         "ans": f'{v["keigo"]}（{v["keigoMasu"]}）', "vid": v["id"]})
+                         "ans": f'{v["keigo"]}（{v["keigoKana"]}／{v["keigoMasu"]}）', "vid": v["id"]})
     elif direction == "keigo-en-jp":
         for v in verbs:
             rows.append({"stim": v["english"],
-                         "ans": f'{v["keigo"]}（{v["keigoMasu"]}）', "vid": v["id"]})
+                         "ans": f'{v["keigo"]}（{v["keigoKana"]}／{v["keigoMasu"]}）', "vid": v["id"]})
     elif direction == "keigo-jp-en":
         for v in verbs:
             rows.append({"stim": _keigo_label(v), "ans": v["english"], "vid": v["id"]})
