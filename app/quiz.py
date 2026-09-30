@@ -208,7 +208,8 @@ def keigo_item(verbs, x, direction):
                 "vocabId": v["id"]}
     if direction == "keigo-en-jp":
         return {"kind": "type", "prompt": x["english"], "lang": "ja",
-                "answers": [a for a in (x["keigoKana"], x["keigo"], x["keigoMasu"]) if a],
+                "answers": [a for a in (x["keigoKana"], x["keigo"], x["keigoMasu"],
+                                       *x.get("keigoAlt", [])) if a],
                 "explain": f'{_show_pair(x)} → {x["keigo"]}（{x["keigoKana"]}／{x["keigoMasu"]}）',
                 "speakAnswer": x["keigoKana"], "vocabId": x["id"]}
     if direction == "keigo-jp-en":
@@ -217,7 +218,8 @@ def keigo_item(verbs, x, direction):
                 "explain": f'{x["keigo"]}（{x["keigoKana"]}） = {x["english"]} (honorific of {_show_pair(x)})',
                 "speakText": x["keigoKana"], "vocabId": x["id"]}
     return {"kind": "type", "prompt": _show_pair(x), "promptJa": True, "lang": "ja",
-            "answers": [a for a in (x["keigoKana"], x["keigo"], x["keigoMasu"]) if a],
+            "answers": [a for a in (x["keigoKana"], x["keigo"], x["keigoMasu"],
+                                   *x.get("keigoAlt", [])) if a],
             "explain": f'{_show_pair(x)} → {x["keigo"]}（{x["keigoKana"]}／{x["keigoMasu"]}）',
             "speakText": x["japanese"], "speakAnswer": x["keigoKana"],
             "vocabId": x["id"]}
