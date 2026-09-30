@@ -96,6 +96,11 @@ class QuizWidget(QFrame):
         self._lay.addStretch(1)
 
         bottom = QHBoxLayout()
+        self.dont_know_btn = QPushButton("I don't know")
+        self.dont_know_btn.setProperty("class", "ghost")
+        self.dont_know_btn.setToolTip("Submit a blank answer (counts as wrong)")
+        self.dont_know_btn.clicked.connect(self._dont_know)
+        bottom.addWidget(self.dont_know_btn)
         bottom.addStretch(1)
         self.check_btn = QPushButton("Check")
         self.check_btn.setProperty("class", "primary")
@@ -157,6 +162,7 @@ class QuizWidget(QFrame):
         self.answer = None
         self.check_btn.setEnabled(True)
         self.check_btn.setText("Check")
+        self.dont_know_btn.setVisible(True)
 
         self.replay_btn.setVisible(bool(q.get("speakText")))
 
@@ -216,6 +222,30 @@ class QuizWidget(QFrame):
             if self.answer is None:
                 return
             ok = self.answer == q["correct"]
+        else:
+            text = self.answer_edit.text()
+            if not text.strip():
+                return
+            ok = grade(q, text)
+        self._submit(q, ok)
+
+    def _dont_know(self):
+        """Submit a null answer — exactly like getting it wrong."""
+        if self.checked:
+            return
+        q = self.items[self.i]
+        self.answer = None
+        self._submit(q, False)
+        if not q.get("speakAnswer") and q.get("speakText"):
+            self._speak(q["speakText"])  # hear the word again when the answer is English
+
+    def _submit(self, q, ok):
+        self.checked = True
+        if ok:
+            self.score += 1
+        self.feedback_lbl.setProperty("class", "feedbackOk" if ok else "feedbackBad")
+        self.feedback_lbl.setText("Correct!" if ok else f"Not quite — {q['explain']}")
+        if q["kind"] == "mc":
             for i, b in enumerate(self._opt_btns):
                 if i == q["correct"]:
                     b.setProperty("ok", "1")
@@ -225,22 +255,11 @@ class QuizWidget(QFrame):
                     b.setEnabled(False)
                 b.style().unpolish(b)
                 b.style().polish(b)
-        else:
-            text = self.answer_edit.text()
-            if not text.strip():
-                return
-            ok = grade(q, text)
-            # keep the input enabled: the next Enter advances to the next question
-
-        self.checked = True
-        if ok:
-            self.score += 1
-        self.feedback_lbl.setProperty("class", "feedbackOk" if ok else "feedbackBad")
-        self.feedback_lbl.setText("Correct!" if ok else f"Not quite — {q['explain']}")
+            self.check_btn.setFocus()  # Enter/Space on the button advances
+        # typing: keep the input enabled so the next Enter advances
         self.answer_given.emit(q, ok)
         self.check_btn.setText("Finish" if self.i + 1 >= len(self.items) else "Next")
-        if q["kind"] == "mc":
-            self.check_btn.setFocus()  # Enter/Space on the button advances
+        self.dont_know_btn.hide()
         if q.get("speakAnswer"):
             self._speak(q["speakAnswer"])
 

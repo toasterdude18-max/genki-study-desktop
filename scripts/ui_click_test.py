@@ -28,6 +28,7 @@ from app.ui.main_window import MainWindow
 from app.ui.lesson_page import LessonPage
 from app.ui.theme import QSS
 from app.quiz import session_items, vocab_item, SESSION_SIZE
+from app import tts
 
 HUB_BUTTONS = ("English → Japanese", "Japanese → English",
                "Honorific → Normal", "Normal → Honorific")
@@ -111,6 +112,12 @@ def main():
     assert st5["lost"] and st5["yellow"] == 0 and st5["green"] == 1, \
         "a miss resets yellows but never greens"
 
+    # ---- TTS: main-thread engine survives speak/stop/speak cycles ----
+    tts.speak('あ')
+    tts.stop()
+    tts.speak('い')
+    assert tts.has_ja_voice() is True, "TTS engine did not survive the stop cycle"
+
     # ---- session re-presentation: a word comes back within the next 10 ----
     pool = data["lessons"][18]["vocab"]
     sess = session_items(pool, vocab_item, SESSION_SIZE)
@@ -171,6 +178,18 @@ def main():
         app_process()
         assert page.quiz.isVisible(), "quiz did not start from table"
         answer_item(page)
+        enter_advances(page)
+        # "I don't know" submits a null answer, counts as wrong, resets yellows
+        item_dk = page.quiz.items[page.quiz.i]
+        QTest.mouseClick(page.quiz.dont_know_btn, Qt.LeftButton)
+        app_process()
+        assert page.quiz.checked, "I don't know did not submit"
+        assert page.quiz.feedback_lbl.property("class") == "feedbackBad", \
+            "I don't know must show the wrong-answer banner"
+        assert not page.quiz.dont_know_btn.isVisible(), "button should hide after submitting"
+        if item_dk.get("vocabId"):
+            assert p.word_card(item_dk["vocabId"])["yellow"] == 0, \
+                "I don't know must reset yellow stars"
         enter_advances(page)
         finish_quiz(page)
         assert page.cont_btn.isVisible(), "Continue button missing after a 50-word session"
