@@ -9,9 +9,14 @@ import json
 import os
 import sys
 import tempfile
+from datetime import datetime
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def today_str():
+    return datetime.now().strftime("%Y-%m-%d")
 
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
@@ -22,6 +27,7 @@ from app.engine import Progress
 from app.ui.main_window import MainWindow
 from app.ui.lesson_page import LessonPage
 from app.ui.theme import QSS
+from app.quiz import session_items, vocab_item, SESSION_SIZE
 
 HUB_BUTTONS = ("English → Japanese", "Japanese → English",
                "Honorific → Normal", "Normal → Honorific")
@@ -105,6 +111,40 @@ def main():
     assert st5["lost"] and st5["yellow"] == 0 and st5["green"] == 1, \
         "a miss resets yellows but never greens"
 
+    # ---- session re-presentation: a word comes back within the next 10 ----
+    pool = data["lessons"][18]["vocab"]
+    sess = session_items(pool, vocab_item, SESSION_SIZE)
+    assert len(sess) == SESSION_SIZE, f"session should be {SESSION_SIZE} items"
+    seen = set()
+    for i in range(SESSION_SIZE - 10):
+        vid = sess[i].get("vocabId")
+        if vid in seen:
+            continue
+        seen.add(vid)
+        window = [x.get("vocabId") for x in sess[i + 1:i + 11]]
+        assert vid in window, f"{vid} not re-presented within the next 10"
+
+    # ---- eligibility: green words rest until all green or 2 days ----
+    l19_pool = data["lessons"][18]["vocab"]
+    p.word_answer("v19-002", True)
+    elig = p.eligible_words(l19_pool)
+    assert all(p.word_card(v["id"])["green"] == 0 for v in elig), \
+        "green words must rest while others lack greens"
+    assert not any(v["id"] == "v19-001" for v in elig), "rested green word leaked in"
+    for v in l19_pool:
+        c = p.word_card(v["id"])
+        if c["green"] == 0:
+            p.data["words"][v["id"]] = {**c, "green": 1, "lastGreen": "2000-01-01"}
+    elig2 = p.eligible_words(l19_pool)
+    expected = {v["id"] for v in l19_pool} - {"v19-001"}  # v19-001 green is from today
+    assert {v["id"] for v in elig2} == expected, \
+        "old greens should return, but today's green must still rest"
+    # fresh green must rest even when everything is green
+    p.data["words"]["v19-003"]["lastGreen"] = today_str()
+    elig3 = p.eligible_words(l19_pool)
+    assert not any(v["id"] == "v19-003" for v in elig3), \
+        "fresh green (<2 days) must rest"
+
     # ---- open lesson 19 via a REAL click ----
     tile = w.dashboard.lesson_btns[19][0]
     QTest.mouseClick(tile, Qt.LeftButton)
@@ -133,6 +173,13 @@ def main():
         answer_item(page)
         enter_advances(page)
         finish_quiz(page)
+        assert page.cont_btn.isVisible(), "Continue button missing after a 50-word session"
+        QTest.mouseClick(page.cont_btn, Qt.LeftButton)
+        app_process()
+        assert page.quiz.isVisible(), "Continue did not start another session"
+        assert len(page.quiz.items) == 50, "continued session is not 50 words"
+        page.on_quiz_quit()
+        app_process()
         page._show_practice()
         app_process()
 
@@ -168,7 +215,6 @@ def main():
         app_process()
         QTest.mouseClick(choose, Qt.LeftButton)
         app_process()
-
     # ---- table back navigation: vocab -> table -> back -> menu ----
     QTest.mouseClick(start_button(page, "Start"), Qt.LeftButton)
     app_process()

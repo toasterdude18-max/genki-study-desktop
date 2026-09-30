@@ -8,19 +8,11 @@ from PySide6.QtWidgets import (
 
 from app import models as M
 from app.quiz import (
-    quiz_vocab, quiz_grammar,
-    quiz_keigo_en_jp, quiz_keigo_jp_en, quiz_keigo_hon_norm, quiz_keigo_norm_hon,
-    vocab_rows, grammar_rows, keigo_rows,
+    session_items, vocab_item, grammar_item, keigo_item, keigo_groups,
+    vocab_rows, grammar_rows, keigo_rows, SESSION_SIZE,
 )
 from app.ui.quiz_widget import QuizWidget
 from app.ui.quiz_table import QuizTable
-
-KEIGO_BUILDERS = {
-    "keigo-en-jp": quiz_keigo_en_jp,
-    "keigo-jp-en": quiz_keigo_jp_en,
-    "keigo-hon-norm": quiz_keigo_hon_norm,
-    "keigo-norm-hon": quiz_keigo_norm_hon,
-}
 
 
 class LessonPage(QWidget):
@@ -34,6 +26,7 @@ class LessonPage(QWidget):
         self.on_change = on_change
         self.key = "vocab"
         self.greens_gained = 0
+        self.session_capped = False
         self._keigo_verbs = [v for l in data["lessons"] if l["id"] <= lesson_id
                              for v in l["vocab"] if v.get("keigo")]
 
@@ -108,6 +101,10 @@ class LessonPage(QWidget):
         self.again_btn.setProperty("class", "primary")
         self.again_btn.clicked.connect(self._start_current)
         row.addWidget(self.again_btn)
+        self.cont_btn = QPushButton(f"Continue (+{SESSION_SIZE})")
+        self.cont_btn.setProperty("class", "primary")
+        self.cont_btn.clicked.connect(self._start_current)
+        row.addWidget(self.cont_btn)
         done_btn = QPushButton("Back to practice")
         done_btn.setProperty("class", "ghost")
         done_btn.clicked.connect(self._show_practice)
@@ -119,6 +116,7 @@ class LessonPage(QWidget):
         result_wrap.addStretch(1)
         outer.addLayout(result_wrap, 1)
         self.result_frame.hide()
+        self.cont_btn.hide()
 
         self._refresh_mastery()
 
@@ -223,7 +221,10 @@ class LessonPage(QWidget):
         lay.setContentsMargins(4, 12, 4, 4)
         lay.setSpacing(12)
         hint = QLabel("Correct answers build yellow stars on each word; a miss resets them. "
-                      "Three yellows become a permanent green star (one per word per day).")
+                      "Three yellows become a permanent green star (one per word per day). "
+                      "Sessions run up to 50 words with an option to continue; every word is "
+                      "re-presented within the next 10. Green words rest until the whole list "
+                      "is green or two days pass.")
         hint.setWordWrap(True)
         hint.setProperty("class", "muted")
         lay.addWidget(hint)
@@ -375,14 +376,30 @@ class LessonPage(QWidget):
         self.table_page.set_rows(title, self._sort_rows(rows))
         self.practice_stack.setCurrentWidget(self.table_page)
 
+    def _quiz_pool(self, key):
+        """Eligible items for a quiz. Green-starred words rest until the whole
+        list is green or two days have passed since their last green."""
+        if key == "vocab":
+            return self.progress.eligible_words(self.lesson["vocab"])
+        if key == "grammar":
+            return self.lesson["grammar"]
+        verbs = self.progress.eligible_words(self._keigo_verbs)
+        if key == "keigo-hon-norm":
+            return keigo_groups(verbs)
+        return verbs
+
+    def _make_for(self, key):
+        if key == "vocab":
+            return vocab_item
+        if key == "grammar":
+            return grammar_item
+        return lambda pool, x: keigo_item(pool, x, key)
+
     def _start_quiz(self, key):
         self.key = key
-        if key == "vocab":
-            items = quiz_vocab(self.lesson)
-        elif key == "grammar":
-            items = quiz_grammar(self.lesson)
-        else:
-            items = KEIGO_BUILDERS[key](self.data, self.lesson_id)
+        pool = self._quiz_pool(key)
+        items = session_items(pool, self._make_for(key))
+        self.session_capped = len(items) >= SESSION_SIZE
         self.greens_gained = 0
         self.tabs.hide()
         self.quiz.start(items, sound=self.progress.data.get("soundOn", True))
@@ -409,7 +426,11 @@ class LessonPage(QWidget):
         self._refresh_mastery()
         self.res_title.setText("Perfect!" if ratio == 1 else "Great job!")
         self.res_score.setText(f"{score} / {total}")
-        self.res_note.setText(f"+{xp} XP · {self.greens_gained} green star(s) earned")
+        note = f"+{xp} XP · {self.greens_gained} green star(s) earned"
+        if self.session_capped:
+            note += " · 50-word session — continue for another"
+        self.res_note.setText(note)
+        self.cont_btn.setVisible(self.session_capped)
         self.result_frame.show()
         if self.on_change:
             self.on_change()

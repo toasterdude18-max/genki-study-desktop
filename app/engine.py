@@ -121,3 +121,17 @@ class Progress:
                 pairs.append((v, c))
         pairs.sort(key=lambda t: (-t[1]["wrong"], t[0]["id"]))
         return pairs
+
+    def eligible_words(self, vocab_items, days=2):
+        """Words allowed in the next quiz round.
+
+        Green-starred words rest until every other word has a green star OR
+        `days` days have passed since their last green.
+        """
+        no_green = [v for v in vocab_items if self.word_card(v["id"])["green"] == 0]
+        if no_green:
+            return no_green
+        cutoff = _days_from(-days)
+        old = [v for v in vocab_items
+               if (self.word_card(v["id"]).get("lastGreen") or "0000-01-01") <= cutoff]
+        return old or vocab_items
