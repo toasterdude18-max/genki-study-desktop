@@ -1,7 +1,5 @@
 """Shared quiz runner: one item at a time, Japanese TTS with a per-quiz mute
 toggle and replay button, and per-word star feedback."""
-import time
-
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
@@ -31,7 +29,6 @@ class QuizWidget(QFrame):
         self._opt_btns = []
         self.sound = True
         self._voice_ok = tts.has_ja_voice()
-        self._last_enter_mono = 0.0
         self._build()
         self.hide()
 
@@ -85,7 +82,6 @@ class QuizWidget(QFrame):
         self.answer_edit.setProperty("class", "answer")
         self.answer_edit.setPlaceholderText("Type your answer…")
         self.answer_edit.returnPressed.connect(self._check)
-        self.answer_edit.installEventFilter(self)
         self._lay.addWidget(self.answer_edit)
 
         self.feedback_lbl = QLabel("")
@@ -104,6 +100,7 @@ class QuizWidget(QFrame):
         self.check_btn = QPushButton("Check")
         self.check_btn.setProperty("class", "primary")
         self.check_btn.clicked.connect(self._check)
+        self.check_btn.installEventFilter(self)
         bottom.addWidget(self.check_btn)
         self._lay.addLayout(bottom)
 
@@ -248,21 +245,14 @@ class QuizWidget(QFrame):
             self._speak(q["speakAnswer"])
 
     def eventFilter(self, obj, event):
-        if obj is self.answer_edit and event.type() == QEvent.KeyPress \
-                and event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self._last_enter_mono = time.monotonic()
+        # Enter on the Check/Next button behaves like clicking it: checks when
+        # unanswered, advances when already checked.
+        if (obj is self.check_btn and event.type() == QEvent.KeyPress
+                and event.key() in (Qt.Key_Return, Qt.Key_Enter)):
+            if self.check_btn.isEnabled():
+                self._check()
+                return True
         return False
-
-    def keyPressEvent(self, event):
-        # Advance on a genuine Enter. The line edit's Enter is echoed to this
-        # widget an instant later — ignore same-instant echoes so one Enter
-        # doesn't check AND advance.
-        if (self.checked and event.key() in (Qt.Key_Return, Qt.Key_Enter)
-                and time.monotonic() - self._last_enter_mono > 0.10):
-            event.accept()
-            self._next()
-            return
-        super().keyPressEvent(event)
 
     def _next(self):
         self.i += 1

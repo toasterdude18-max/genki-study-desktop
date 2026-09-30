@@ -63,7 +63,7 @@ def enter_advances(page):
     if current["kind"] == "type":
         QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)  # real user presses Enter in the box
     else:
-        QTest.keyClick(page.quiz, Qt.Key_Return)
+        QTest.keyClick(page.quiz.check_btn, Qt.Key_Return)   # focus sits on Check/Next after grading
     app_process()
     assert page.quiz.i == before + 1, "Enter did not advance after checking"
 
