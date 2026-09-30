@@ -10,8 +10,10 @@ from app import models as M
 from app.quiz import (
     quiz_vocab, quiz_grammar,
     quiz_keigo_en_jp, quiz_keigo_jp_en, quiz_keigo_hon_norm, quiz_keigo_norm_hon,
+    vocab_rows, grammar_rows, keigo_rows,
 )
 from app.ui.quiz_widget import QuizWidget
+from app.ui.quiz_table import QuizTable
 
 KEIGO_BUILDERS = {
     "keigo-en-jp": quiz_keigo_en_jp,
@@ -247,7 +249,7 @@ class LessonPage(QWidget):
         fv.addWidget(self.vocab_badge)
         bv = QPushButton("Start")
         bv.setProperty("class", "primary")
-        bv.clicked.connect(lambda _=False: self._start_quiz("vocab"))
+        bv.clicked.connect(lambda _=False: self._show_table("vocab"))
         fv.addWidget(bv)
         lay.addWidget(frame_v)
 
@@ -266,7 +268,7 @@ class LessonPage(QWidget):
         fg.addLayout(tg, 1)
         bg = QPushButton("Start")
         bg.setProperty("class", "primary")
-        bg.clicked.connect(lambda _=False: self._start_quiz("grammar"))
+        bg.clicked.connect(lambda _=False: self._show_table("grammar"))
         fg.addWidget(bg)
         lay.addWidget(frame_g)
 
@@ -313,12 +315,21 @@ class LessonPage(QWidget):
             b = QPushButton(f"{name}\n{desc}")
             b.setProperty("class", "hub")
             b.setMinimumHeight(72)
-            b.clicked.connect(lambda _=False, k=key: self._start_quiz(k))
+            b.clicked.connect(lambda _=False, k=key: self._show_table(k))
             hub_lay.addWidget(b)
         hub_lay.addStretch(1)
 
+        # table: Education-Perfect-style preview before each drill
+        self.table_page = QuizTable(self.progress,
+                                    on_start=lambda: self._start_quiz(self.table_key),
+                                    on_back=lambda: self.practice_stack.setCurrentIndex(
+                                        self.table_back_target))
+        self.table_key = "vocab"
+        self.table_back_target = 0
+
         self.practice_stack.addWidget(menu)   # 0
         self.practice_stack.addWidget(self._hub)  # 1
+        self.practice_stack.addWidget(self.table_page)  # 2
         return page
 
     # ---------- mastery summary ----------
@@ -333,6 +344,37 @@ class LessonPage(QWidget):
             self._refresh_cards()
 
     # ---------- quizzes ----------
+    def _sort_rows(self, rows):
+        """Weak words (0 greens) first, most-missed at the top; grammar rows last."""
+        def key(r):
+            vid = r.get("vid")
+            if vid is None:
+                return (2, 0)
+            c = self.progress.word_card(vid)
+            return (0 if c["green"] == 0 else 1, -c["wrong"])
+        return sorted(rows, key=key)
+
+    def _show_table(self, key):
+        self.table_key = key
+        if key == "vocab":
+            title = "Vocabulary — lesson words"
+            rows = vocab_rows(self.lesson)
+            self.table_back_target = 0
+        elif key == "grammar":
+            title = "Grammar — patterns and meanings"
+            rows = grammar_rows(self.lesson)
+            self.table_back_target = 0
+        else:
+            titles = {"keigo-en-jp": "English → Japanese",
+                      "keigo-jp-en": "Japanese → English",
+                      "keigo-hon-norm": "Honorific → Normal",
+                      "keigo-norm-hon": "Normal → Honorific"}
+            title = f'{titles[key]} — words in this drill'
+            rows = keigo_rows(self.data, self.lesson_id, key)
+            self.table_back_target = 1
+        self.table_page.set_rows(title, self._sort_rows(rows))
+        self.practice_stack.setCurrentWidget(self.table_page)
+
     def _start_quiz(self, key):
         self.key = key
         if key == "vocab":

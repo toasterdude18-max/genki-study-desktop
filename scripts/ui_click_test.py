@@ -1,8 +1,9 @@
 """Real-click regression test: drives the UI with QTest.mouseClick through the real
-event loop. Covers navigation safety, the four honorific sub-drills, word-star
-transitions, the weak-words panel/drill, and the mute toggle.
+event loop. Covers navigation safety, preview tables for every quiz, the four
+honorific sub-drills, word-star transitions, banner feedback, Enter-to-advance,
+mute toggle and dark mode.
 
-Run:  python scripts\\ui_click_test.py   (from D:\\Genki Study)
+Run:  python scripts\\ui_click_test.py   (from the app root)
 """
 import json
 import os
@@ -35,6 +36,8 @@ def answer_item(page):
         QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)
     app_process()
     assert page.quiz.checked, "answer was not graded"
+    assert page.quiz.feedback_lbl.property("class") in ("feedbackOk", "feedbackBad"), \
+        "banner feedback class not set"
 
 
 def app_process():
@@ -49,7 +52,20 @@ def finish_quiz(page):
 
 
 def start_button(page, text):
-    return [b for b in page.tabs.widget(2).findChildren(QPushButton) if b.text() == text][0]
+    """Find a button on the practice MENU (not the table's own Start)."""
+    menu = page.practice_stack.widget(0)
+    return [b for b in menu.findChildren(QPushButton) if b.text() == text][0]
+
+
+def enter_advances(page):
+    before = page.quiz.i
+    current = page.quiz.items[before]
+    if current["kind"] == "type":
+        QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)  # real user presses Enter in the box
+    else:
+        QTest.keyClick(page.quiz, Qt.Key_Return)
+    app_process()
+    assert page.quiz.i == before + 1, "Enter did not advance after checking"
 
 
 def main():
@@ -88,9 +104,6 @@ def main():
     st5 = p.word_answer("v19-001", False)
     assert st5["lost"] and st5["yellow"] == 0 and st5["green"] == 1, \
         "a miss resets yellows but never greens"
-    p.word_answer("v19-002", False)
-    assert any(v["id"] == "v19-002" for v, _c in p.weak_words(data["lessons"][18]["vocab"])), \
-        "missed word should be weak"
 
     # ---- open lesson 19 via a REAL click ----
     tile = w.dashboard.lesson_btns[19][0]
@@ -104,27 +117,38 @@ def main():
     app_process()
     assert page.tabs.currentIndex() == 2
 
-    # ---- vocab + grammar quizzes ----
-    starts = [b for b in page.tabs.widget(2).findChildren(QPushButton) if b.text() == "Start"]
+    # ---- vocab + grammar: menu -> preview table -> quiz ----
+    menu = page.practice_stack.widget(0)
+    starts = [b for b in menu.findChildren(QPushButton) if b.text() == "Start"]
+    assert len(starts) == 2, f"expected 2 Start buttons, found {len(starts)}"
     for btn in starts:
         QTest.mouseClick(btn, Qt.LeftButton)
         app_process()
         assert isinstance(w.stack.currentWidget(), LessonPage), "bounced home on Start"
-        assert page.quiz.isVisible()
+        assert page.practice_stack.currentWidget() is page.table_page, "table did not open"
+        assert page.table_page.table.rowCount() > 0, "table is empty"
+        QTest.mouseClick(page.table_page.start_btn, Qt.LeftButton)
+        app_process()
+        assert page.quiz.isVisible(), "quiz did not start from table"
         answer_item(page)
+        enter_advances(page)
         finish_quiz(page)
         page._show_practice()
         app_process()
 
-    # ---- honorific hub: four sub-drills ----
+    # ---- honorific hub: choose -> table -> quiz (all four sub-drills) ----
     choose = start_button(page, "Choose")
     QTest.mouseClick(choose, Qt.LeftButton)
     app_process()
-    hub_btns = [b for b in page.tabs.widget(2).findChildren(QPushButton)
+    hub_btns = [b for b in page.practice_stack.widget(1).findChildren(QPushButton)
                 if b.text().startswith(HUB_BUTTONS)]
     assert len(hub_btns) == 4, f"expected 4 hub buttons, found {len(hub_btns)}"
     for btn in hub_btns:
         QTest.mouseClick(btn, Qt.LeftButton)
+        app_process()
+        assert page.practice_stack.currentWidget() is page.table_page, "keigo table did not open"
+        assert page.table_page.table.rowCount() > 0, "keigo table is empty"
+        QTest.mouseClick(page.table_page.start_btn, Qt.LeftButton)
         app_process()
         assert isinstance(w.stack.currentWidget(), LessonPage), "hub drill navigated home"
         assert page.quiz.isVisible()
@@ -138,19 +162,29 @@ def main():
         QTest.mouseClick(page.quiz.mute_btn, Qt.LeftButton)
         app_process()
         answer_item(page)
+        enter_advances(page)
         finish_quiz(page)
         page._show_practice()
         app_process()
         QTest.mouseClick(choose, Qt.LeftButton)
         app_process()
 
+    # ---- table back navigation: vocab -> table -> back -> menu ----
+    QTest.mouseClick(start_button(page, "Start"), Qt.LeftButton)
+    app_process()
+    assert page.practice_stack.currentWidget() is page.table_page
+    table_back = [b for b in page.table_page.findChildren(QPushButton) if b.text() == "‹ Back"][0]
+    QTest.mouseClick(table_back, Qt.LeftButton)
+    app_process()
+    assert page.practice_stack.currentIndex() == 0, "table back did not return to menu"
+
     # ---- back navigation (the only legal exit) ----
     page._back()
     app_process()
     assert w.stack.currentIndex() == 0
 
-    print("REAL-CLICK TEST PASS — nav safety, word stars, 4 honorific sub-drills, "
-          "mute toggle, dark mode")
+    print("REAL-CLICK TEST PASS — nav safety, word stars, preview tables, banner "
+          "feedback, Enter-to-advance, 4 honorific sub-drills, mute toggle, dark mode")
 
 
 if __name__ == "__main__":

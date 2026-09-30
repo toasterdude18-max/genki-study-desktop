@@ -196,6 +196,48 @@ def quiz_keigo_norm_hon(data, lesson_id, n=10):
     return items
 
 
+# ---------- preview table rows (Education Perfect style) ----------
+def vocab_rows(lesson):
+    """[(stimulus, answer, vocabId)] for the lesson's words."""
+    rows = []
+    for v in lesson["vocab"]:
+        rows.append({"stim": _show_pair(v),
+                     "ans": f'{v["english"]} · {v["reading"]}', "vid": v["id"]})
+    return rows
+
+
+def grammar_rows(lesson):
+    rows = []
+    for g in lesson["grammar"]:
+        ex = g.get("example")
+        ans = g["meaning"] + (f'\n{ex["jp"]} = {ex["en"]}' if ex else "")
+        rows.append({"stim": g["pattern"], "ans": ans, "vid": None})
+    return rows
+
+
+def keigo_rows(data, lesson_id, direction):
+    """Preview rows for an honorific sub-drill."""
+    verbs = _keigo_verbs(data, lesson_id)
+    rows = []
+    if direction == "keigo-norm-hon":
+        for v in verbs:
+            rows.append({"stim": _show_pair(v),
+                         "ans": f'{v["keigo"]}（{v["keigoMasu"]}）', "vid": v["id"]})
+    elif direction == "keigo-en-jp":
+        for v in verbs:
+            rows.append({"stim": v["english"],
+                         "ans": f'{v["keigo"]}（{v["keigoMasu"]}）', "vid": v["id"]})
+    elif direction == "keigo-jp-en":
+        for v in verbs:
+            rows.append({"stim": _keigo_label(v), "ans": v["english"], "vid": v["id"]})
+    else:  # keigo-hon-norm
+        for kana, bases in _rev_map(verbs).items():
+            rows.append({"stim": _keigo_label(bases[0]),
+                         "ans": " / ".join(_show_pair(b) for b in bases),
+                         "vid": bases[0]["id"]})
+    return rows
+
+
 def grade(item, answer):
     if item["kind"] == "mc":
         return answer == item["correct"]

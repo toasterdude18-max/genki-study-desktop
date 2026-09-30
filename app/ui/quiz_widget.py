@@ -1,6 +1,8 @@
 """Shared quiz runner: one item at a time, Japanese TTS with a per-quiz mute
 toggle and replay button, and per-word star feedback."""
-from PySide6.QtCore import Qt, Signal
+import time
+
+from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
     QProgressBar, QSizePolicy,
@@ -20,6 +22,7 @@ class QuizWidget(QFrame):
         self.setObjectName("quizCard")
         self.setProperty("class", "quizCard")
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.items = []
         self.i = 0
         self.score = 0
@@ -28,6 +31,7 @@ class QuizWidget(QFrame):
         self._opt_btns = []
         self.sound = True
         self._voice_ok = tts.has_ja_voice()
+        self._last_enter_mono = 0.0
         self._build()
         self.hide()
 
@@ -81,6 +85,7 @@ class QuizWidget(QFrame):
         self.answer_edit.setProperty("class", "answer")
         self.answer_edit.setPlaceholderText("Type your answer…")
         self.answer_edit.returnPressed.connect(self._check)
+        self.answer_edit.installEventFilter(self)
         self._lay.addWidget(self.answer_edit)
 
         self.feedback_lbl = QLabel("")
@@ -228,7 +233,7 @@ class QuizWidget(QFrame):
             if not text.strip():
                 return
             ok = grade(q, text)
-            self.answer_edit.setEnabled(False)
+            # keep the input enabled: the next Enter advances to the next question
 
         self.checked = True
         if ok:
@@ -237,8 +242,27 @@ class QuizWidget(QFrame):
         self.feedback_lbl.setText("Correct!" if ok else f"Not quite — {q['explain']}")
         self.answer_given.emit(q, ok)
         self.check_btn.setText("Finish" if self.i + 1 >= len(self.items) else "Next")
+        if q["kind"] == "mc":
+            self.check_btn.setFocus()  # Enter/Space on the button advances
         if q.get("speakAnswer"):
             self._speak(q["speakAnswer"])
+
+    def eventFilter(self, obj, event):
+        if obj is self.answer_edit and event.type() == QEvent.KeyPress \
+                and event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self._last_enter_mono = time.monotonic()
+        return False
+
+    def keyPressEvent(self, event):
+        # Advance on a genuine Enter. The line edit's Enter is echoed to this
+        # widget an instant later — ignore same-instant echoes so one Enter
+        # doesn't check AND advance.
+        if (self.checked and event.key() in (Qt.Key_Return, Qt.Key_Enter)
+                and time.monotonic() - self._last_enter_mono > 0.10):
+            event.accept()
+            self._next()
+            return
+        super().keyPressEvent(event)
 
     def _next(self):
         self.i += 1

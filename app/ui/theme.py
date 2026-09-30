@@ -152,12 +152,22 @@ QPushButton.opt:disabled {{ color: {muted}; }}
 QLineEdit.answer {{ background: {panel}; border: 2px solid {input_border}; border-radius: 14px;
     padding: 12px 14px; font-size: 19px; }}
 QLineEdit.answer:focus {{ border-color: {input_focus}; }}
-QLabel.feedbackOk {{ color: {ok_text}; font-weight: 700; font-size: 16px; }}
-QLabel.feedbackBad {{ color: {bad_text}; font-weight: 700; font-size: 16px; }}
+QLabel.feedbackOk {{ background: {ok_bg}; color: {ok_text}; border: 2px solid {ok_border};
+    border-radius: 12px; padding: 12px 16px; font-weight: 800; font-size: 16px; }}
+QLabel.feedbackBad {{ background: {bad_bg}; color: {bad_text}; border: 2px solid {bad_border};
+    border-radius: 12px; padding: 12px 16px; font-weight: 800; font-size: 16px; }}
 QLabel.pips {{ color: #d97706; font-weight: 800; font-size: 16px; }}
 QLabel.starGain {{ color: {pill_stars_text}; font-weight: 800; font-size: 17px; }}
 QLabel.scoreBig {{ font-size: 48px; font-weight: 800; color: {pill_stars_text}; }}
 QLabel.resultTitle {{ font-size: 22px; font-weight: 800; }}
+
+/* ---------- preview table (Education Perfect style) ---------- */
+QTableWidget {{ background: {panel}; border: 1px solid {border}; border-radius: 12px;
+    gridline-color: {border}; }}
+QHeaderView::section {{ background: {panel}; color: {text}; border: none;
+    border-bottom: 2px solid {border}; padding: 8px; font-weight: 800; }}
+QTableWidget::item {{ padding: 6px 8px; }}
+QTableWidget::item:selected {{ background: {panel}; }}
 
 /* ---------- progress bar & inputs ---------- */
 QProgressBar {{ background: {progress_bg}; border: none; border-radius: 4px; min-height: 9px; max-height: 9px; }}
