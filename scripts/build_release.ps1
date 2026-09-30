@@ -27,7 +27,7 @@ Write-Host "=== 2/5 rebuild onedir bundle ==="
 Remove-Item (Join-Path $root "release") -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path (Join-Path $root "release") | Out-Null
 python -m PyInstaller --noconfirm --onedir --windowed --name "Genki Study" `
-    --icon (Join-Path $root "assets\genki.ico") --collect-all pyttsx3 `
+    --icon (Join-Path $root "assets\genki.ico") --collect-all pyttsx3 --collect-all comtypes `
     --distpath (Join-Path $root "release") `
     --workpath (Join-Path $root "build") `
     --specpath (Join-Path $root "build") `
