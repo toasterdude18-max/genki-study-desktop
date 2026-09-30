@@ -1,5 +1,8 @@
-"""Shared quiz runner: one item at a time, Japanese TTS with a per-quiz mute
-toggle and replay button, and per-word star feedback."""
+"""Shared quiz runner: one typed item at a time, Japanese TTS with a per-quiz
+mute toggle and replay button, and per-word star feedback.
+
+Multiple choice was removed — every question is answered by typing.
+"""
 from PySide6.QtCore import Qt, Signal, QEvent
 from PySide6.QtWidgets import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QLineEdit,
@@ -26,7 +29,6 @@ class QuizWidget(QFrame):
         self.score = 0
         self.answer = None
         self.checked = False
-        self._opt_btns = []
         self.sound = True
         self._voice_ok = tts.has_ja_voice()
         self._build()
@@ -73,10 +75,6 @@ class QuizWidget(QFrame):
         prompt_row.addWidget(self.replay_btn)
         prompt_row.addStretch(1)
         self._lay.addLayout(prompt_row)
-
-        self.opts_lay = QVBoxLayout()
-        self.opts_lay.setSpacing(10)
-        self._lay.addLayout(self.opts_lay)
 
         self.answer_edit = QLineEdit()
         self.answer_edit.setProperty("class", "answer")
@@ -157,7 +155,10 @@ class QuizWidget(QFrame):
         self.prompt_lbl.style().unpolish(self.prompt_lbl)
         self.prompt_lbl.style().polish(self.prompt_lbl)
 
-        self._clear_dynamic()
+        self.feedback_lbl.setText("")
+        self.feedback_lbl.setProperty("class", "")
+        self.pips_lbl.setText("")
+        self.pips_lbl.setProperty("class", "")
         self.checked = False
         self.answer = None
         self.check_btn.setEnabled(True)
@@ -166,68 +167,25 @@ class QuizWidget(QFrame):
 
         self.replay_btn.setVisible(bool(q.get("speakText")))
 
-        if q["kind"] == "mc":
-            self.answer_edit.hide()
-            for idx, opt in enumerate(q["options"]):
-                b = QPushButton(opt)
-                b.setProperty("class", "opt")
-                if q.get("optionsJa") is not None:
-                    b.setProperty("lang", "ja" if q["optionsJa"] else "en")
-                b.setMinimumHeight(46)
-                b.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-                b.clicked.connect(lambda _=False, i=idx: self._choose(i))
-                self.opts_lay.addWidget(b)
-                self._opt_btns.append(b)
-            if self._opt_btns:
-                self._opt_btns[0].setFocus()
-        else:
-            self.answer_edit.setPlaceholderText("日本語で入力" if q.get("lang") == "ja"
-                                                else "Type your answer…")
-            self.answer_edit.show()
-            self.answer_edit.clear()
-            self.answer_edit.setEnabled(True)
-            self.answer_edit.setFocus()
+        self.answer_edit.setPlaceholderText("日本語で入力" if q.get("lang") == "ja"
+                                            else "Type your answer…")
+        self.answer_edit.show()
+        self.answer_edit.clear()
+        self.answer_edit.setEnabled(True)
+        self.answer_edit.setFocus()
 
         if q.get("speakText"):
             self._speak(q["speakText"])
-
-    def _clear_dynamic(self):
-        while self.opts_lay.count():
-            item = self.opts_lay.takeAt(0)
-            w = item.widget()
-            if w:
-                w.deleteLater()
-        self._opt_btns = []
-        self.feedback_lbl.setText("")
-        self.feedback_lbl.setProperty("class", "")
-        self.pips_lbl.setText("")
-        self.pips_lbl.setProperty("class", "")
-
-    def _choose(self, idx):
-        if self.checked:
-            return
-        self.answer = idx
-        for i, b in enumerate(self._opt_btns):
-            b.setProperty("sel", "1" if i == idx else "")
-            b.style().unpolish(b)
-            b.style().polish(b)
-        self._check()
 
     def _check(self):
         if self.checked:
             self._next()
             return
         q = self.items[self.i]
-        if q["kind"] == "mc":
-            if self.answer is None:
-                return
-            ok = self.answer == q["correct"]
-        else:
-            text = self.answer_edit.text()
-            if not text.strip():
-                return
-            ok = grade(q, text)
-        self._submit(q, ok)
+        text = self.answer_edit.text()
+        if not text.strip():
+            return
+        self._submit(q, grade(q, text))
 
     def _dont_know(self):
         """Submit a null answer — exactly like getting it wrong."""
@@ -245,18 +203,7 @@ class QuizWidget(QFrame):
             self.score += 1
         self.feedback_lbl.setProperty("class", "feedbackOk" if ok else "feedbackBad")
         self.feedback_lbl.setText("Correct!" if ok else f"Not quite — {q['explain']}")
-        if q["kind"] == "mc":
-            for i, b in enumerate(self._opt_btns):
-                if i == q["correct"]:
-                    b.setProperty("ok", "1")
-                elif i == self.answer:
-                    b.setProperty("bad", "1")
-                else:
-                    b.setEnabled(False)
-                b.style().unpolish(b)
-                b.style().polish(b)
-            self.check_btn.setFocus()  # Enter/Space on the button advances
-        # typing: keep the input enabled so the next Enter advances
+        # keep the input enabled: the next Enter advances to the next question
         self.answer_given.emit(q, ok)
         self.check_btn.setText("Finish" if self.i + 1 >= len(self.items) else "Next")
         self.dont_know_btn.hide()

@@ -36,11 +36,9 @@ HUB_BUTTONS = ("English → Japanese", "Japanese → English",
 
 def answer_item(page):
     item = page.quiz.items[0]
-    if item["kind"] == "mc":
-        QTest.mouseClick(page.quiz._opt_btns[item["correct"]], Qt.LeftButton)
-    else:
-        page.quiz.answer_edit.setText(item["answers"][0])
-        QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)
+    assert item["kind"] == "type", "all questions must be typing-only (no multiple choice)"
+    page.quiz.answer_edit.setText(item["answers"][0])
+    QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)
     app_process()
     assert page.quiz.checked, "answer was not graded"
     assert page.quiz.feedback_lbl.property("class") in ("feedbackOk", "feedbackBad"), \
@@ -66,11 +64,7 @@ def start_button(page, text):
 
 def enter_advances(page):
     before = page.quiz.i
-    current = page.quiz.items[before]
-    if current["kind"] == "type":
-        QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)  # real user presses Enter in the box
-    else:
-        QTest.keyClick(page.quiz.check_btn, Qt.Key_Return)   # focus sits on Check/Next after grading
+    QTest.keyClick(page.quiz.answer_edit, Qt.Key_Return)  # real user presses Enter in the box
     app_process()
     assert page.quiz.i == before + 1, "Enter did not advance after checking"
 
@@ -122,6 +116,7 @@ def main():
     pool = data["lessons"][18]["vocab"]
     sess = session_items(pool, vocab_item, SESSION_SIZE)
     assert len(sess) == SESSION_SIZE, f"session should be {SESSION_SIZE} items"
+    assert all(it["kind"] == "type" for it in sess), "vocab sessions must be typing-only"
     seen = set()
     for i in range(SESSION_SIZE - 10):
         vid = sess[i].get("vocabId")

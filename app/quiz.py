@@ -46,23 +46,7 @@ def _explain_g(g):
     return base
 
 
-def _pick(items, n):
-    return random.sample(items, min(n, len(items)))
-
-
-def _mc(prompt, correct, distractors, explain, prompt_ja=False,
-        speak_text=None, vocab_id=None, options_ja=None):
-    options = list(distractors) + [correct]
-    random.shuffle(options)
-    item = {"kind": "mc", "prompt": prompt, "promptJa": prompt_ja,
-            "options": options, "correct": options.index(correct), "explain": explain}
-    if speak_text:
-        item["speakText"] = speak_text
-    if vocab_id:
-        item["vocabId"] = vocab_id
-    if options_ja is not None:
-        item["optionsJa"] = options_ja
-    return item
+# All quizzes are typing-only — multiple choice was removed entirely.
 
 
 # ---------- session builder ----------
@@ -101,20 +85,8 @@ def session_items(pool, make, n=SESSION_SIZE):
 
 # ---------- vocabulary ----------
 def vocab_item(vocab, v):
-    """One mixed JP<->EN question for a word."""
-    others = [x for x in vocab if x["id"] != v["id"]]
-    mode = random.choice(("jp-en", "en-jp", "type-jp", "type-en"))
-    if mode == "jp-en":
-        distract = [x["english"] for x in _pick(others, 3)]
-        return _mc(_show_pair(v), v["english"], distract, _explain(v),
-                   prompt_ja=True, speak_text=v["japanese"], vocab_id=v["id"],
-                   options_ja=False)
-    if mode == "en-jp":
-        distract = [_show_pair(x) for x in _pick(others, 3)]
-        item = _mc(v["english"], _show_pair(v), distract, _explain(v), vocab_id=v["id"],
-                   options_ja=True)
-        item["speakAnswer"] = v["japanese"]
-        return item
+    """One typing question for a word: EN→JP or JP→EN (no multiple choice)."""
+    mode = random.choice(("type-jp", "type-en"))
     if mode == "type-jp":
         return {"kind": "type", "prompt": v["english"], "lang": "ja",
                 "answers": [a for a in (v.get("kanji"), v["japanese"], v["reading"]) if a],
@@ -137,25 +109,14 @@ def quiz_vocab(lesson, n=SESSION_SIZE):
 
 # ---------- grammar ----------
 def grammar_item(grammar, g):
-    """One grammar question: pattern<->meaning or example translation."""
-    others = [x for x in grammar if x is not g]
-    form = random.choice(("p2m", "m2p", "ex"))
-    if form == "p2m" and len(others) >= 3:
-        distract = [x["meaning"] for x in _pick(others, 3)]
-        return _mc(g["pattern"], g["meaning"], distract, _explain_g(g),
-                   prompt_ja=True, speak_text=g["pattern"], options_ja=False)
-    if form == "m2p" and len(others) >= 3:
-        distract = [x["pattern"] for x in _pick(others, 3)]
-        return _mc(g["meaning"], g["pattern"], distract, _explain_g(g),
-                   options_ja=True)
+    """One grammar question: hear/see the example sentence, type its English
+    translation (no multiple choice). Points without an example are skipped."""
     ex = g.get("example")
-    prompt = ex["jp"] if ex else g["pattern"]
-    answers = [ex["en"].rstrip(".")] if ex else []
-    item = {"kind": "type", "prompt": prompt, "promptJa": True, "lang": "en",
-            "answers": answers, "explain": _explain_g(g)}
-    if ex:
-        item["speakText"] = prompt
-    return item
+    if not ex:
+        return None
+    return {"kind": "type", "prompt": ex["jp"], "promptJa": True, "lang": "en",
+            "answers": [ex["en"].rstrip(".")], "explain": _explain_g(g),
+            "speakText": ex["jp"]}
 
 
 def quiz_grammar(lesson, n=SESSION_SIZE):
