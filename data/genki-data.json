@@ -6372,7 +6372,7 @@
      "kanji": "降る",
      "extra": false,
      "keigo": "お降りになる",
-     "keigoKana": "おおりになる",
+     "keigoKana": "おふりになる",
      "keigoMasu": "お降りになります"
     },
     {
@@ -8339,9 +8339,9 @@
      "type": "noun",
      "kanji": "歩く",
      "extra": false,
-     "keigo": "お歩きになる",
-     "keigoKana": "おあるきになる",
-     "keigoMasu": "お歩きになります"
+     "keigo": null,
+     "keigoKana": null,
+     "keigoMasu": null
     },
     {
      "id": "v10-021",
@@ -8352,9 +8352,9 @@
      "type": "verb-u",
      "kanji": null,
      "extra": false,
-     "keigo": null,
-     "keigoKana": null,
-     "keigoMasu": null
+     "keigo": "お歩きになる",
+     "keigoKana": "おあるきになる",
+     "keigoMasu": "お歩きになります"
     },
     {
      "id": "v10-022",
@@ -16220,7 +16220,7 @@
     {
      "id": "v19-017",
      "lesson": 19,
-     "japanese": "きゃくさま",
+     "japanese": "おきゃくさま",
      "reading": "okyakusama",
      "english": "customer (honorific)",
      "type": "noun",
